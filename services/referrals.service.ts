@@ -1,6 +1,11 @@
 import { apiClient } from "@/lib/api-client";
 import type { ReferralStats, TreeNode, UserProfile } from "@/types";
 
+export interface ReferralCodeInfo {
+  schoolId: string;
+  referrerName: string;
+}
+
 export const referralsService = {
   createReferral: (
     schoolId: string,
@@ -27,5 +32,10 @@ export const referralsService = {
       .get<ReferralStats>(`/schools/${schoolId}/referrals/stats`, {
         params: userId ? { userId } : {},
       })
+      .then((r) => r.data),
+
+  getReferralCodeInfo: (code: string) =>
+    apiClient
+      .get<ReferralCodeInfo>(`/referral-codes/${code}`)
       .then((r) => r.data),
 };

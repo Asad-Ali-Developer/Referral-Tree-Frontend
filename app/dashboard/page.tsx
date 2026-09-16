@@ -1,16 +1,21 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { useAppSelector } from '@/store/hooks';
-import { referralsService } from '@/services/referrals.service';
-import { extractErrorMessage } from '@/lib/api-client';
-import { StatStrip } from '@/components/dashboard/stat-strip';
-import { MyCodeCard } from '@/components/dashboard/my-code-card';
-import { InviteDialog } from '@/components/dashboard/invite-dialog';
-import { ReferralTreeView } from '@/components/dashboard/referral-tree-view';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { ReferralStats, TreeNode } from '@/types';
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Share2 } from "lucide-react";
+
+import { useAppSelector } from "@/store/hooks";
+import { referralsService } from "@/services/referrals.service";
+import { extractErrorMessage } from "@/lib/api-client";
+
+import { StatStrip } from "@/components/dashboard/stat-strip";
+import { MyCodeCard } from "@/components/dashboard/my-code-card";
+import { InviteDialog } from "@/components/dashboard/invite-dialog";
+import { ReferralTreeView } from "@/components/dashboard/referral-tree-view";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+
+import type { ReferralStats, TreeNode } from "@/types";
 
 export default function DashboardPage() {
   const user = useAppSelector((s) => s.auth.user);
@@ -18,14 +23,21 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [depth, setDepth] = useState(5);
+
   const [loadingTree, setLoadingTree] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
 
+  // Controls the InviteDialog
+  const [inviteOpen, setInviteOpen] = useState(false);
+
   const loadStats = useCallback(async () => {
     if (!user) return;
+
     setLoadingStats(true);
+
     try {
       const data = await referralsService.getStats(user.schoolId, user.id);
+
       setStats(data);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -37,9 +49,12 @@ export default function DashboardPage() {
   const loadTree = useCallback(
     async (nextDepth: number) => {
       if (!user) return;
+
       setLoadingTree(true);
+
       try {
         const data = await referralsService.getTree(user.schoolId, nextDepth);
+
         setTree(data);
       } catch (err) {
         toast.error(extractErrorMessage(err));
@@ -51,38 +66,57 @@ export default function DashboardPage() {
   );
 
   useEffect(() => {
+    if (!user) return;
+
     loadStats();
     loadTree(depth);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, depth, loadStats, loadTree]);
 
   function handleDepthChange(nextDepth: number) {
     setDepth(nextDepth);
-    loadTree(nextDepth);
   }
 
   function handleInvited() {
     loadStats();
     loadTree(depth);
+
+    // Close the dialog after an invite
+    setInviteOpen(false);
   }
 
   if (!user) return null;
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-serif text-2xl text-ink">Referral network</h1>
-          <p className="mt-1 text-sm text-stone-500">Signed in as {user.name}</p>
+
+          <p className="mt-1 text-sm text-stone-500">
+            Signed in as {user.name}
+          </p>
         </div>
+
+        {/* Invite button */}
+        <Button
+          type="button"
+          onClick={() => setInviteOpen(true)}
+          className="shrink-0 bg-stone-900 text-stone-50 hover:bg-stone-800"
+        >
+          <Share2 className="mr-2 h-4 w-4" />
+          Invite someone
+        </Button>
+
+        {/* Invite dialog */}
         <InviteDialog
-          schoolId={user.schoolId}
-          schoolName="your school"
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
           referralCode={user.referralCode}
-          onInvited={handleInvited}
         />
       </div>
 
+      {/* Stats */}
       {loadingStats || !stats ? (
         <div className="flex gap-3">
           <Skeleton className="h-20 flex-1" />
@@ -92,8 +126,10 @@ export default function DashboardPage() {
         <StatStrip stats={stats} />
       )}
 
+      {/* My referral code */}
       <MyCodeCard code={user.referralCode} />
 
+      {/* Referral tree */}
       <ReferralTreeView
         tree={tree}
         loading={loadingTree}
