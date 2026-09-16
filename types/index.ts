@@ -1,7 +1,7 @@
 export interface School {
   id: string;
   name: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface UserProfile {
@@ -12,6 +12,7 @@ export interface UserProfile {
   referralCode: string;
   referredById: string | null;
   createdAt: string;
+  school: School;
 }
 
 export interface TokenPair {

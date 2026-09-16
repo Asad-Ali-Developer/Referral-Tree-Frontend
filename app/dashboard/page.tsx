@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Share2 } from "lucide-react";
+import { Share2, Building2 } from "lucide-react";
 
 import { useAppSelector } from "@/store/hooks";
 import { referralsService } from "@/services/referrals.service";
@@ -37,7 +37,6 @@ export default function DashboardPage() {
 
     try {
       const data = await referralsService.getStats(user.schoolId, user.id);
-
       setStats(data);
     } catch (err) {
       toast.error(extractErrorMessage(err));
@@ -54,7 +53,6 @@ export default function DashboardPage() {
 
       try {
         const data = await referralsService.getTree(user.schoolId, nextDepth);
-
         setTree(data);
       } catch (err) {
         toast.error(extractErrorMessage(err));
@@ -79,8 +77,6 @@ export default function DashboardPage() {
   function handleInvited() {
     loadStats();
     loadTree(depth);
-
-    // Close the dialog after an invite
     setInviteOpen(false);
   }
 
@@ -90,12 +86,22 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="space-y-1">
           <h1 className="font-serif text-2xl text-ink">Referral network</h1>
-
-          <p className="mt-1 text-sm text-stone-500">
-            Signed in as {user.name}
+          <p className="text-sm text-stone-500">
+            Signed in as{" "}
+            <span className="font-medium text-stone-700">{user.name}</span>
           </p>
+
+          {/* 👇 School Badge - Dedicated & Highlighted */}
+          {user.school && (
+            <div className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-1.5 border border-stone-200">
+              <Building2 className="h-4 w-4 text-stone-600" />
+              <span className="text-sm font-medium text-stone-900">
+                {user.school.name}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Invite button */}
